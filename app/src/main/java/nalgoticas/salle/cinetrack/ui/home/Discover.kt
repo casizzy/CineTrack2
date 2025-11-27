@@ -1,6 +1,5 @@
-package nalgoticas.salle.cinetrack.ui.home
+package nalgoticas.salle.cinetrack.ui.discover
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -17,31 +16,24 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import nalgoticas.salle.cinetrack.R
 import coil.compose.AsyncImage
-
-
-
-data class Movie(
-    val id: Int,
-    val title: String,
-    val year: Int,
-    val genre: String,
-    val rating: Float,
-    val imageUrl: String
-)
+import nalgoticas.salle.cinetrack.ui.home.Movie
+import nalgoticas.salle.cinetrack.ui.home.MovieCategory
 
 private val trendingMovies = listOf(
     Movie(
@@ -78,16 +70,8 @@ private val trendingMovies = listOf(
     )
 )
 
-
-
-enum class MovieCategory(val label: String) {
-    Trending("Trending"),
-    Popular("Popular"),
-    New("New")
-}
-
 @Composable
-fun HomeScreen() {
+fun DiscoverScreen() {
     val bg = Color(0xFF050510)
     var selectedCategory by remember { mutableStateOf(MovieCategory.Trending) }
 
@@ -97,24 +81,18 @@ fun HomeScreen() {
             .background(bg)
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        CineTrackTopBar()
+        DiscoverTopBar()
         Spacer(Modifier.height(8.dp))
-        SearchField()
-        Spacer(Modifier.height(16.dp))
-        CategoryTabs(
-            selected = selectedCategory,
-            onSelectedChange = { selectedCategory = it }
-        )
+        DiscoverSearchField()
         Spacer(Modifier.height(16.dp))
         MovieGrid(trendingMovies)
     }
 }
 
-
 @Composable
-private fun CineTrackTopBar() {
+private fun DiscoverTopBar() {
     Text(
-        text = "CineTrack",
+        text = "Discover",
         color = Color.White,
         fontSize = 24.sp,
         fontWeight = FontWeight.Bold
@@ -122,7 +100,7 @@ private fun CineTrackTopBar() {
 }
 
 @Composable
-private fun SearchField() {
+private fun DiscoverSearchField() {
     OutlinedTextField(
         value = "",
         onValueChange = { },
@@ -164,9 +142,7 @@ private fun CategoryTabs(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
-            .background(
-                Color(0xCC151521)
-            )
+            .background(Color(0xCC151521))
             .padding(4.dp)
     ) {
         Row(
@@ -184,7 +160,6 @@ private fun CategoryTabs(
                     )
                 )
 
-
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -197,7 +172,6 @@ private fun CategoryTabs(
                             shape = RoundedCornerShape(20.dp),
                             alpha = 1f
                         )
-
                         .clickable { onSelectedChange(category) },
                     contentAlignment = Alignment.Center
                 ) {
@@ -251,8 +225,7 @@ private fun MovieGrid(movies: List<Movie>) {
 @Composable
 private fun MovieCard(movie: Movie) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = Modifier.fillMaxWidth()
     ) {
         Box(
             modifier = Modifier
@@ -267,8 +240,6 @@ private fun MovieCard(movie: Movie) {
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
-
-
 
             Box(
                 modifier = Modifier
@@ -313,7 +284,6 @@ private fun MovieCard(movie: Movie) {
                             )
                         )
                     )
-
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),

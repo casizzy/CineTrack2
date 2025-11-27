@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import nalgoticas.salle.cinetrack.ui.discover.DiscoverScreen
 import nalgoticas.salle.cinetrack.ui.home.HomeScreen
 import nalgoticas.salle.cinetrack.ui.theme.CineTrackBottomBar
 
@@ -34,13 +35,10 @@ fun CineTrackApp() {
             composable("diary")    { DiaryScreen() }
             composable("profile")  { ProfileScreen() }
         }
+
     }
 }
 
-@Composable
-fun DiscoverScreen() {
-    SimpleCenterText("Discover")
-}
 
 @Composable
 fun DiaryScreen() {
