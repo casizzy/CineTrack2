@@ -13,6 +13,8 @@ import androidx.navigation.compose.rememberNavController
 import nalgoticas.salle.cinetrack.ui.discover.DiscoverScreen
 import nalgoticas.salle.cinetrack.ui.home.HomeScreen
 import nalgoticas.salle.cinetrack.ui.theme.CineTrackBottomBar
+import nalgoticas.salle.cinetrack.ui.home.DiaryScreen
+import nalgoticas.salle.cinetrack.ui.home.ProfileScreen
 
 @Composable
 fun CineTrackApp() {
