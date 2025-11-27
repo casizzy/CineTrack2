@@ -15,7 +15,6 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,8 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import nalgoticas.salle.cinetrack.data.Movie
+import nalgoticas.salle.cinetrack.data.MovieCollections
 import nalgoticas.salle.cinetrack.data.MovieData
-
 
 private val allMovies = MovieData.movies
 
@@ -40,28 +39,13 @@ private enum class DiaryFilter(val label: String) {
     Favorites("Favorites")
 }
 
-
 @Composable
 fun DiaryScreen() {
     val bg = Color(0xFF050510)
     var currentFilter by remember { mutableStateOf(DiaryFilter.Watched) }
 
-    val watched = remember {
-        mutableStateMapOf(
-            1 to true,
-            3 to true,
-            4 to true
-        )
-    }
-    val favorites = remember {
-        mutableStateMapOf(
-            3 to true,
-            4 to true
-        )
-    }
-
-    val watchedMovies = allMovies.filter { watched[it.id] == true }
-    val favoriteMovies = allMovies.filter { favorites[it.id] == true }
+    val watchedMovies = allMovies.filter { MovieCollections.isWatched(it.id) }
+    val favoriteMovies = allMovies.filter { MovieCollections.isFavorite(it.id) }
 
     val moviesToShow = when (currentFilter) {
         DiaryFilter.Watched -> watchedMovies
@@ -76,7 +60,6 @@ fun DiaryScreen() {
             .fillMaxSize()
             .background(bg)
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -100,7 +83,6 @@ fun DiaryScreen() {
             )
         }
 
-
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -112,20 +94,13 @@ fun DiaryScreen() {
 
         MovieDiaryGrid(
             movies = moviesToShow,
-            isWatched = { movie -> watched[movie.id] == true },
-            isFavorite = { movie -> favorites[movie.id] == true },
-            onToggleWatched = { movie ->
-                val current = watched[movie.id] ?: false
-                watched[movie.id] = !current
-            },
-            onToggleFavorite = { movie ->
-                val current = favorites[movie.id] ?: false
-                favorites[movie.id] = !current
-            }
+            isWatched = { movie -> MovieCollections.isWatched(movie.id) },
+            isFavorite = { movie -> MovieCollections.isFavorite(movie.id) },
+            onToggleWatched = { movie -> MovieCollections.toggleWatched(movie.id) },
+            onToggleFavorite = { movie -> MovieCollections.toggleFavorite(movie.id) }
         )
     }
 }
-
 
 @Composable
 private fun DiaryTabs(
@@ -190,7 +165,6 @@ private fun DiaryTabs(
         }
     }
 }
-
 
 @Composable
 private fun MovieDiaryGrid(

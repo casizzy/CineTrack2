@@ -32,19 +32,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import nalgoticas.salle.cinetrack.data.MovieCollections
 import nalgoticas.salle.cinetrack.data.MovieData
 
-/**
- * Llamas a este composable desde el NavHost:
- *
- * composable("details/{movieId}", ...) { backStackEntry ->
- *     val id = backStackEntry.arguments?.getInt("movieId") ?: return@composable
- *     MovieDetailScreen(
- *         movieId = id,
- *         onBack = { navController.popBackStack() }
- *     )
- * }
- */
 @Composable
 fun MovieDetailScreen(
     movieId: Int,
@@ -56,6 +46,9 @@ fun MovieDetailScreen(
     var yourRating by remember { mutableStateOf(movie.rating.toInt()) }
     var review by remember { mutableStateOf("") }
 
+    var isWatched = MovieCollections.isWatched(movieId)
+    val isFavorite = MovieCollections.isFavorite(movieId)
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -66,6 +59,7 @@ fun MovieDetailScreen(
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
         ) {
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -135,6 +129,7 @@ fun MovieDetailScreen(
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -169,19 +164,20 @@ fun MovieDetailScreen(
                     }
 
                     Spacer(Modifier.width(8.dp))
+
                     Box(
                         modifier = Modifier
                             .weight(1f)
                             .height(52.dp)
                             .clip(RoundedCornerShape(18.dp))
                             .background(
-                                Brush.horizontalGradient(
-                                    listOf(
-                                        Color(0xFF15D37B),
-                                        Color(0xFF0CAF62)
-                                    )
-                                )
-                            ),
+                                color = if (isWatched) Color(0xFF1AC98A) else Color(0xFF0D0D16),
+                                shape = RoundedCornerShape(18.dp)
+                            )
+                            .clickable {
+                                MovieCollections.toggleWatched(movieId)
+                                isWatched = !isWatched
+                            },
                         contentAlignment = Alignment.Center
                     ) {
                         Row(
@@ -189,13 +185,13 @@ fun MovieDetailScreen(
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.Visibility,
-                                contentDescription = null,
+                                contentDescription = "Watched",
                                 tint = Color.White,
                                 modifier = Modifier.size(20.dp)
                             )
                             Spacer(Modifier.width(6.dp))
                             Text(
-                                text = "Watched",
+                                text = if (isWatched) "Watched" else "Mark watched",
                                 color = Color.White,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.SemiBold
@@ -204,17 +200,22 @@ fun MovieDetailScreen(
                     }
 
                     Spacer(Modifier.width(8.dp))
+
                     Box(
                         modifier = Modifier
                             .size(48.dp)
                             .clip(RoundedCornerShape(18.dp))
-                            .background(Color(0xFF0D0D16)),
+                            .background(
+                                color = if (isFavorite) Color(0xFFFF4F6A) else Color(0xFF0D0D16),
+                                shape = RoundedCornerShape(18.dp)
+                            )
+                            .clickable { MovieCollections.toggleFavorite(movieId) },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Favorite,
                             contentDescription = null,
-                            tint = Color(0xFFFF4F6A)
+                            tint = if (isFavorite) Color.White else Color(0xFFFF4F6A)
                         )
                     }
                 }
@@ -242,9 +243,7 @@ fun MovieDetailScreen(
                                     color = Color(0xFFFFC045),
                                     shape = RoundedCornerShape(12.dp)
                                 )
-                                .clickable {
-                                    yourRating = index + 1
-                                },
+                                .clickable { yourRating = index + 1 },
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
@@ -255,10 +254,10 @@ fun MovieDetailScreen(
                         }
                     }
                 }
+
                 Spacer(Modifier.height(18.dp))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     movie.genres.forEachIndexed { index, genre ->
                         GenreChip(
                             text = genre,
@@ -339,7 +338,6 @@ fun MovieDetailScreen(
         }
     }
 }
-
 @Composable
 private fun GenreChip(text: String, isPrimary: Boolean) {
     Box(

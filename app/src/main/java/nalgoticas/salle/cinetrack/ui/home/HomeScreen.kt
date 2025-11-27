@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import nalgoticas.salle.cinetrack.data.Movie
+import nalgoticas.salle.cinetrack.data.MovieCollections
 import nalgoticas.salle.cinetrack.data.MovieData
 
 private val trendingMovies: List<Movie> = MovieData.movies
@@ -61,6 +62,7 @@ fun HomeScreen(
             onSelectedChange = { selectedCategory = it }
         )
         Spacer(Modifier.height(16.dp))
+
         MovieGrid(
             movies = trendingMovies,
             onMovieClick = onMovieClick
@@ -211,6 +213,9 @@ private fun MovieCard(
     movie: Movie,
     onClick: () -> Unit
 ) {
+
+    val isWatched = MovieCollections.isWatched(movie.id)
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -248,7 +253,10 @@ private fun MovieCard(
                     .padding(8.dp)
                     .align(Alignment.TopStart)
                     .clip(RoundedCornerShape(50))
-                    .background(Color(0xFF1AC98A))
+                    .background(
+                        color = if (isWatched) Color(0xFF1AC98A) else Color(0x661AC98A),
+                        shape = RoundedCornerShape(50)
+                    )
             ) {
                 Icon(
                     imageVector = Icons.Filled.Visibility,

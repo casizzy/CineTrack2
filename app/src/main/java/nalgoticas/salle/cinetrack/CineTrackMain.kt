@@ -35,7 +35,6 @@ fun CineTrackApp() {
             modifier = Modifier.padding(innerPadding)
         ) {
 
-            // -------- HOME ----------
             composable("home") {
                 HomeScreen(
                     onMovieClick = { movie ->
@@ -44,7 +43,6 @@ fun CineTrackApp() {
                 )
             }
 
-            // -------- DISCOVER ----------
             composable("discover") {
                 DiscoverScreen(
                     onMovieClick = { movie ->
@@ -53,11 +51,9 @@ fun CineTrackApp() {
                 )
             }
 
-            // -------- DIARY / PROFILE ----------
             composable("diary")   { DiaryScreen() }
             composable("profile") { ProfileScreen() }
 
-            // -------- DETALLE ----------
             composable(
                 route = "details/{movieId}",
                 arguments = listOf(
