@@ -11,16 +11,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Whatshot
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,48 +27,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import nalgoticas.salle.cinetrack.ui.home.Movie
+import nalgoticas.salle.cinetrack.data.Movie
+import nalgoticas.salle.cinetrack.data.MovieData
 import nalgoticas.salle.cinetrack.ui.home.MovieCategory
 
-private val trendingMovies = listOf(
-    Movie(
-        id = 1,
-        title = "Parasite",
-        year = 2019,
-        genre = "Drama",
-        rating = 4.7f,
-        imageUrl = "https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg"
-    ),
-    Movie(
-        id = 2,
-        title = "Interstellar",
-        year = 2014,
-        genre = "Adventure",
-        rating = 4.5f,
-        imageUrl = "https://image.tmdb.org/t/p/w500/rAiYTfKGqDCRIIqo664sY9XZIvQ.jpg"
-    ),
-    Movie(
-        id = 3,
-        title = "Inception",
-        year = 2010,
-        genre = "Action",
-        rating = 4.6f,
-        imageUrl = "https://image.tmdb.org/t/p/w500/edv5CZvWj09upOsy2Y6IwDhK8bt.jpg"
-    ),
-    Movie(
-        id = 4,
-        title = "The Dark Knight",
-        year = 2008,
-        genre = "Action",
-        rating = 4.7f,
-        imageUrl = "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg"
-    )
-)
+private val discoverMovies: List<Movie> = MovieData.movies
 
 @Composable
-fun DiscoverScreen() {
+fun DiscoverScreen(
+    onMovieClick: (Movie) -> Unit
+) {
     val bg = Color(0xFF050510)
-    var selectedCategory by remember { mutableStateOf(MovieCategory.Trending) }
 
     Column(
         modifier = Modifier
@@ -85,7 +49,10 @@ fun DiscoverScreen() {
         Spacer(Modifier.height(8.dp))
         DiscoverSearchField()
         Spacer(Modifier.height(16.dp))
-        MovieGrid(trendingMovies)
+        MovieGrid(
+            movies = discoverMovies,
+            onMovieClick = onMovieClick
+        )
     }
 }
 
@@ -132,83 +99,11 @@ private fun DiscoverSearchField() {
     )
 }
 
-
 @Composable
-private fun CategoryTabs(
-    selected: MovieCategory,
-    onSelectedChange: (MovieCategory) -> Unit
+private fun MovieGrid(
+    movies: List<Movie>,
+    onMovieClick: (Movie) -> Unit
 ) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .background(Color(0xCC151521))
-            .padding(4.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            MovieCategory.values().forEach { category ->
-                val isSelected = category == selected
-
-                val brush = Brush.horizontalGradient(
-                    colors = listOf(
-                        Color(0xFFFF8A4D),
-                        Color(0xFFFF4F6A)
-                    )
-                )
-
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(horizontal = 4.dp)
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(
-                            brush = if (isSelected) brush else Brush.linearGradient(
-                                listOf(Color.Transparent, Color.Transparent)
-                            ),
-                            shape = RoundedCornerShape(20.dp),
-                            alpha = 1f
-                        )
-                        .clickable { onSelectedChange(category) },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.padding(
-                            vertical = 6.dp,
-                            horizontal = if (isSelected) 10.dp else 6.dp
-                        )
-                    ) {
-                        if (category == MovieCategory.Trending) {
-                            Icon(
-                                imageVector = Icons.Filled.Whatshot,
-                                contentDescription = null,
-                                tint = if (isSelected) Color.White else Color(0xFF8A8A99),
-                                modifier = Modifier
-                                    .size(16.dp)
-                                    .padding(end = 4.dp)
-                            )
-                        }
-
-                        Text(
-                            text = category.label,
-                            color = if (isSelected) Color.White else Color(0xFF8A8A99),
-                            fontSize = 13.sp,
-                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun MovieGrid(movies: List<Movie>) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = Modifier.fillMaxSize(),
@@ -217,15 +112,23 @@ private fun MovieGrid(movies: List<Movie>) {
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(movies, key = { it.id }) { movie ->
-            MovieCard(movie)
+            MovieCard(
+                movie = movie,
+                onClick = { onMovieClick(movie) }
+            )
         }
     }
 }
 
 @Composable
-private fun MovieCard(movie: Movie) {
+private fun MovieCard(
+    movie: Movie,
+    onClick: () -> Unit
+) {
     Column(
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
     ) {
         Box(
             modifier = Modifier

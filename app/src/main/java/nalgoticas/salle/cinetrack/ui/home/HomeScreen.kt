@@ -1,6 +1,5 @@
 package nalgoticas.salle.cinetrack.ui.home
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -24,61 +23,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import nalgoticas.salle.cinetrack.R
 import coil.compose.AsyncImage
+import nalgoticas.salle.cinetrack.data.Movie
+import nalgoticas.salle.cinetrack.data.MovieData
 
-
-
-data class Movie(
-    val id: Int,
-    val title: String,
-    val year: Int,
-    val genre: String,
-    val rating: Float,
-    val imageUrl: String
-)
-
-private val trendingMovies = listOf(
-    Movie(
-        id = 1,
-        title = "Parasite",
-        year = 2019,
-        genre = "Drama",
-        rating = 4.7f,
-        imageUrl = "https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg"
-    ),
-    Movie(
-        id = 2,
-        title = "Interstellar",
-        year = 2014,
-        genre = "Adventure",
-        rating = 4.5f,
-        imageUrl = "https://image.tmdb.org/t/p/w500/rAiYTfKGqDCRIIqo664sY9XZIvQ.jpg"
-    ),
-    Movie(
-        id = 3,
-        title = "Inception",
-        year = 2010,
-        genre = "Action",
-        rating = 4.6f,
-        imageUrl = "https://image.tmdb.org/t/p/w500/edv5CZvWj09upOsy2Y6IwDhK8bt.jpg"
-    ),
-    Movie(
-        id = 4,
-        title = "The Dark Knight",
-        year = 2008,
-        genre = "Action",
-        rating = 4.7f,
-        imageUrl = "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg"
-    )
-)
-
-
+private val trendingMovies: List<Movie> = MovieData.movies
 
 enum class MovieCategory(val label: String) {
     Trending("Trending"),
@@ -87,7 +40,9 @@ enum class MovieCategory(val label: String) {
 }
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(
+    onMovieClick: (Movie) -> Unit
+) {
     val bg = Color(0xFF050510)
     var selectedCategory by remember { mutableStateOf(MovieCategory.Trending) }
 
@@ -106,10 +61,12 @@ fun HomeScreen() {
             onSelectedChange = { selectedCategory = it }
         )
         Spacer(Modifier.height(16.dp))
-        MovieGrid(trendingMovies)
+        MovieGrid(
+            movies = trendingMovies,
+            onMovieClick = onMovieClick
+        )
     }
 }
-
 
 @Composable
 private fun CineTrackTopBar() {
@@ -154,7 +111,6 @@ private fun SearchField() {
     )
 }
 
-
 @Composable
 private fun CategoryTabs(
     selected: MovieCategory,
@@ -164,9 +120,7 @@ private fun CategoryTabs(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
-            .background(
-                Color(0xCC151521)
-            )
+            .background(Color(0xCC151521))
             .padding(4.dp)
     ) {
         Row(
@@ -184,7 +138,6 @@ private fun CategoryTabs(
                     )
                 )
 
-
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -197,7 +150,6 @@ private fun CategoryTabs(
                             shape = RoundedCornerShape(20.dp),
                             alpha = 1f
                         )
-
                         .clickable { onSelectedChange(category) },
                     contentAlignment = Alignment.Center
                 ) {
@@ -234,7 +186,10 @@ private fun CategoryTabs(
 }
 
 @Composable
-private fun MovieGrid(movies: List<Movie>) {
+private fun MovieGrid(
+    movies: List<Movie>,
+    onMovieClick: (Movie) -> Unit
+) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = Modifier.fillMaxSize(),
@@ -243,16 +198,23 @@ private fun MovieGrid(movies: List<Movie>) {
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         items(movies, key = { it.id }) { movie ->
-            MovieCard(movie)
+            MovieCard(
+                movie = movie,
+                onClick = { onMovieClick(movie) }
+            )
         }
     }
 }
 
 @Composable
-private fun MovieCard(movie: Movie) {
+private fun MovieCard(
+    movie: Movie,
+    onClick: () -> Unit
+) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable { onClick() }
     ) {
         Box(
             modifier = Modifier
@@ -267,8 +229,6 @@ private fun MovieCard(movie: Movie) {
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
-
-
 
             Box(
                 modifier = Modifier
@@ -313,7 +273,6 @@ private fun MovieCard(movie: Movie) {
                             )
                         )
                     )
-
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),

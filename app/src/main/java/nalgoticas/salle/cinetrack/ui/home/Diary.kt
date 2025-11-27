@@ -29,43 +29,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import nalgoticas.salle.cinetrack.ui.home.Movie
+import nalgoticas.salle.cinetrack.data.Movie
+import nalgoticas.salle.cinetrack.data.MovieData
 
 
-private val allMovies = listOf(
-    Movie(
-        id = 1,
-        title = "Parasite",
-        year = 2019,
-        genre = "Drama",
-        rating = 4.7f,
-        imageUrl = "https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg"
-    ),
-    Movie(
-        id = 2,
-        title = "Interstellar",
-        year = 2014,
-        genre = "Adventure",
-        rating = 4.5f,
-        imageUrl = "https://image.tmdb.org/t/p/w500/rAiYTfKGqDCRIIqo664sY9XZIvQ.jpg"
-    ),
-    Movie(
-        id = 3,
-        title = "Inception",
-        year = 2010,
-        genre = "Action",
-        rating = 4.6f,
-        imageUrl = "https://image.tmdb.org/t/p/w500/edv5CZvWj09upOsy2Y6IwDhK8bt.jpg"
-    ),
-    Movie(
-        id = 4,
-        title = "The Dark Knight",
-        year = 2008,
-        genre = "Action",
-        rating = 4.7f,
-        imageUrl = "https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg"
-    )
-)
+private val allMovies = MovieData.movies
 
 private enum class DiaryFilter(val label: String) {
     Watched("Watched"),

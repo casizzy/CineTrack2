@@ -1,20 +1,22 @@
 package nalgoticas.salle.cinetrack.ui
 
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import androidx.compose.material3.Scaffold
-import androidx.compose.foundation.layout.padding
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import nalgoticas.salle.cinetrack.ui.discover.DiscoverScreen
-import nalgoticas.salle.cinetrack.ui.home.HomeScreen
-import nalgoticas.salle.cinetrack.ui.theme.CineTrackBottomBar
 import nalgoticas.salle.cinetrack.ui.home.DiaryScreen
+import nalgoticas.salle.cinetrack.ui.home.HomeScreen
+import nalgoticas.salle.cinetrack.ui.home.MovieDetailScreen
 import nalgoticas.salle.cinetrack.ui.home.ProfileScreen
+import nalgoticas.salle.cinetrack.ui.theme.CineTrackBottomBar
 
 @Composable
 fun CineTrackApp() {
@@ -32,37 +34,42 @@ fun CineTrackApp() {
             startDestination = "home",
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable("home")     { HomeScreen() }
-            composable("discover") { DiscoverScreen() }
-            composable("diary")    { DiaryScreen() }
-            composable("profile")  { ProfileScreen() }
+
+            // -------- HOME ----------
+            composable("home") {
+                HomeScreen(
+                    onMovieClick = { movie ->
+                        navController.navigate("details/${movie.id}")
+                    }
+                )
+            }
+
+            // -------- DISCOVER ----------
+            composable("discover") {
+                DiscoverScreen(
+                    onMovieClick = { movie ->
+                        navController.navigate("details/${movie.id}")
+                    }
+                )
+            }
+
+            // -------- DIARY / PROFILE ----------
+            composable("diary")   { DiaryScreen() }
+            composable("profile") { ProfileScreen() }
+
+            // -------- DETALLE ----------
+            composable(
+                route = "details/{movieId}",
+                arguments = listOf(
+                    navArgument("movieId") { type = NavType.IntType }
+                )
+            ) { backStackEntry ->
+                val id = backStackEntry.arguments?.getInt("movieId") ?: return@composable
+                MovieDetailScreen(
+                    movieId = id,
+                    onBack = { navController.popBackStack() }
+                )
+            }
         }
-
-    }
-}
-
-
-@Composable
-fun DiaryScreen() {
-    SimpleCenterText("Diary")
-}
-
-@Composable
-fun ProfileScreen() {
-    SimpleCenterText("Profile")
-}
-
-@Composable
-private fun SimpleCenterText(text: String) {
-    androidx.compose.foundation.layout.Box(
-        modifier = androidx.compose.ui.Modifier
-            .padding(16.dp)
-            .fillMaxSize(),
-        contentAlignment = androidx.compose.ui.Alignment.Center
-    ) {
-        androidx.compose.material3.Text(
-            text = text,
-            color = Color.White
-        )
     }
 }
