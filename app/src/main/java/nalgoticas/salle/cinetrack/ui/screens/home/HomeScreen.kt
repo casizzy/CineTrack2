@@ -1,17 +1,13 @@
-package nalgoticas.salle.cinetrack.ui.home
+package nalgoticas.salle.cinetrack.ui.screens.home
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Whatshot
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -22,17 +18,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
-import nalgoticas.salle.cinetrack.data.Movie
-import nalgoticas.salle.cinetrack.data.MovieCollections
-import nalgoticas.salle.cinetrack.data.MovieData
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import nalgoticas.salle.cinetrack.models.Pelicula
+import nalgoticas.salle.cinetrack.services.MovieService
+import nalgoticas.salle.cinetrack.ui.screens.home.components.MovieGrid
+import nalgoticas.salle.cinetrack.ui.theme.background
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
-private val trendingMovies: List<Movie> = MovieData.movies
+
 
 enum class MovieCategory(val label: String) {
     Trending("Trending"),
@@ -42,75 +41,121 @@ enum class MovieCategory(val label: String) {
 
 @Composable
 fun HomeScreen(
-    onMovieClick: (Movie) -> Unit
+    onMovieClick: (Pelicula) -> Unit
+
 ) {
-    val bg = Color(0xFF050510)
+
+    val bg = background
+    var movies by remember { mutableStateOf<List<Pelicula>>(emptyList()) }
+    var isLoading by remember { mutableStateOf(true) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var search by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf(MovieCategory.Trending) }
 
-    Column(
+    LaunchedEffect(Unit) {
+        isLoading = true
+        error = null
+
+        try {
+            val retrofit = Retrofit.Builder()
+                .baseUrl("https://api-app-peliculas.onrender.com/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+
+            val service = retrofit.create(MovieService::class.java)
+
+            val result = withContext(Dispatchers.IO) {
+                service.getMovies()
+            }
+            movies = result
+        } catch (e: Exception) {
+            Log.e("HomeScreen", "Error: ${e.message}", e)
+            error = "Error loading movies"
+        } finally {
+            isLoading = false
+        }
+    }
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(bg)
-            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        CineTrackTopBar()
-        Spacer(Modifier.height(8.dp))
-        SearchField()
-        Spacer(Modifier.height(16.dp))
-        CategoryTabs(
-            selected = selectedCategory,
-            onSelectedChange = { selectedCategory = it }
-        )
-        Spacer(Modifier.height(16.dp))
+        when {
+            isLoading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color(0xFFFF4F6A))
+                }
+            }
 
-        MovieGrid(
-            movies = trendingMovies,
-            onMovieClick = onMovieClick
-        )
+            error != null -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = error ?: "Error", color = Color.Red)
+                }
+            }
+
+            else -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp, vertical = 12.dp)
+                ) {
+                    Text(
+                        text = "CineTrack",
+                        color = Color.White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Spacer(Modifier.height(8.dp))
+
+                    Spacer(Modifier.height(16.dp))
+
+                    CategoryTabs(
+                        selected = selectedCategory,
+                        onSelectedChange = { selectedCategory = it }
+                    )
+
+                    Spacer(Modifier.height(16.dp))
+
+                    val query = search.trim().lowercase()
+
+                    val searched: List<Pelicula> = movies.filter {
+                        it.title.lowercase().contains(query) ||
+                                it.genre.lowercase().contains(query)
+                    }
+
+                    val moviesToShow = when (selectedCategory) {
+                        MovieCategory.Trending ->
+                            searched.sortedByDescending { it.rating }
+                        MovieCategory.Popular ->
+                            searched
+                        MovieCategory.New ->
+                            searched.sortedByDescending { it.year }
+                    }
+
+                    val filtered: List<Pelicula> = movies.filter { movie ->
+                        val titleMatch = movie.title.lowercase().contains(query)
+                        val genreMatch = movie.genre.any { g ->
+                            g.lowercase().contains(query)
+                        }
+                        titleMatch || genreMatch
+                    }
+                    MovieGrid(
+                        movies = moviesToShow,
+                        modifier = Modifier.fillMaxSize(),
+                        onMovieClick = onMovieClick
+                    )
+                }
+            }
+        }
     }
-}
-
-@Composable
-private fun CineTrackTopBar() {
-    Text(
-        text = "CineTrack",
-        color = Color.White,
-        fontSize = 24.sp,
-        fontWeight = FontWeight.Bold
-    )
-}
-
-@Composable
-private fun SearchField() {
-    OutlinedTextField(
-        value = "",
-        onValueChange = { },
-        placeholder = {
-            Text(
-                text = "Search films...",
-                color = Color(0xFF8A8A99)
-            )
-        },
-        leadingIcon = {
-            Icon(
-                imageVector = Icons.Filled.Search,
-                contentDescription = "Search",
-                tint = Color(0xFF8A8A99)
-            )
-        },
-        singleLine = true,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(52.dp),
-        shape = RoundedCornerShape(24.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            unfocusedBorderColor = Color.Transparent,
-            focusedBorderColor = Color(0xFFFF6B3D),
-            unfocusedContainerColor = Color(0xFF12121E),
-            focusedContainerColor = Color(0xFF12121E),
-            cursorColor = Color.White
-        )
-    )
 }
 
 @Composable
@@ -121,7 +166,7 @@ private fun CategoryTabs(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(24.dp))
             .background(Color(0xCC151521))
             .padding(4.dp)
     ) {
@@ -144,12 +189,12 @@ private fun CategoryTabs(
                     modifier = Modifier
                         .weight(1f)
                         .padding(horizontal = 4.dp)
-                        .clip(RoundedCornerShape(20.dp))
+                        .clip(androidx.compose.foundation.shape.RoundedCornerShape(20.dp))
                         .background(
                             brush = if (isSelected) brush else Brush.linearGradient(
                                 listOf(Color.Transparent, Color.Transparent)
                             ),
-                            shape = RoundedCornerShape(20.dp),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
                             alpha = 1f
                         )
                         .clickable { onSelectedChange(category) },
@@ -178,162 +223,12 @@ private fun CategoryTabs(
                             text = category.label,
                             color = if (isSelected) Color.White else Color(0xFF8A8A99),
                             fontSize = 13.sp,
-                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun MovieGrid(
-    movies: List<Movie>,
-    onMovieClick: (Movie) -> Unit
-) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 80.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        items(movies, key = { it.id }) { movie ->
-            MovieCard(
-                movie = movie,
-                onClick = { onMovieClick(movie) }
-            )
-        }
-    }
-}
-
-@Composable
-private fun MovieCard(
-    movie: Movie,
-    onClick: () -> Unit
-) {
-
-    val isWatched = MovieCollections.isWatched(movie.id)
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(2f / 3f)
-                .clip(RoundedCornerShape(24.dp))
-                .background(Color(0xFF262636))
-        ) {
-            AsyncImage(
-                model = movie.imageUrl,
-                contentDescription = movie.title,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                Color(0xCC000000)
-                            )
-                        )
-                    )
-            )
-
-            Box(
-                modifier = Modifier
-                    .padding(8.dp)
-                    .align(Alignment.TopStart)
-                    .clip(RoundedCornerShape(50))
-                    .background(
-                        color = if (isWatched) Color(0xFF1AC98A) else Color(0x661AC98A),
-                        shape = RoundedCornerShape(50)
-                    )
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Visibility,
-                    contentDescription = "Seen",
-                    tint = Color.White,
-                    modifier = Modifier
-                        .padding(6.dp)
-                        .size(16.dp)
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .padding(8.dp)
-                    .align(Alignment.TopEnd)
-                    .clip(RoundedCornerShape(50))
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                Color(0xFFFFC045),
-                                Color(0xFFFF8A3C)
-                            )
-                        )
-                    )
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Star,
-                        contentDescription = "Rating",
-                        tint = Color.White,
-                        modifier = Modifier
-                            .size(14.dp)
-                            .padding(end = 2.dp)
-                    )
-                    Text(
-                        text = movie.rating.toString(),
-                        color = Color.White,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
-        }
-
-        Spacer(Modifier.height(8.dp))
-
-        Text(
-            text = movie.title,
-            color = Color.White,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-
-        Spacer(Modifier.height(2.dp))
-
-        Text(
-            text = "${movie.year}",
-            color = Color(0xFF8A8A99),
-            fontSize = 12.sp
-        )
-
-        Spacer(Modifier.height(4.dp))
-
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            repeat(5) { index ->
-                val filled = index < movie.rating.toInt()
-                Icon(
-                    imageVector = Icons.Filled.Star,
-                    contentDescription = null,
-                    tint = if (filled) Color(0xFFFFC045) else Color(0xFF3A3A4A),
-                    modifier = Modifier.size(14.dp)
-                )
             }
         }
     }

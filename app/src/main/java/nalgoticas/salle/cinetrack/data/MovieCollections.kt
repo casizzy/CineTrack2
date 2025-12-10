@@ -1,31 +1,24 @@
 package nalgoticas.salle.cinetrack.data
 
-import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 
 object MovieCollections {
 
-    // ids de películas vistas
-    val watchedIds = mutableStateListOf<Int>()
 
-    // ids de películas favoritas
-    val favoriteIds = mutableStateListOf<Int>()
+    private val watched = mutableStateMapOf<Int, Boolean>()
+    private val favorites = mutableStateMapOf<Int, Boolean>()
 
-    fun isWatched(id: Int): Boolean = watchedIds.contains(id)
-    fun isFavorite(id: Int): Boolean = favoriteIds.contains(id)
+    fun isWatched(id: Int): Boolean = watched[id] == true
 
     fun toggleWatched(id: Int) {
-        if (watchedIds.contains(id)) {
-            watchedIds.remove(id)
-        } else {
-            watchedIds.add(id)
-        }
+        val current = watched[id] ?: false
+        watched[id] = !current
     }
 
+    fun isFavorite(id: Int): Boolean = favorites[id] == true
+
     fun toggleFavorite(id: Int) {
-        if (favoriteIds.contains(id)) {
-            favoriteIds.remove(id)
-        } else {
-            favoriteIds.add(id)
-        }
+        val current = favorites[id] ?: false
+        favorites[id] = !current
     }
 }

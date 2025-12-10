@@ -1,27 +1,27 @@
-package nalgoticas.salle.cinetrack.ui
-
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import nalgoticas.salle.cinetrack.ui.theme.CineTrackBottomBar
+
+
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
-import nalgoticas.salle.cinetrack.ui.discover.DiscoverScreen
-import nalgoticas.salle.cinetrack.ui.home.DiaryScreen
-import nalgoticas.salle.cinetrack.ui.home.HomeScreen
-import nalgoticas.salle.cinetrack.ui.home.MovieDetailScreen
-import nalgoticas.salle.cinetrack.ui.home.ProfileScreen
-import nalgoticas.salle.cinetrack.ui.theme.CineTrackBottomBar
+
+import nalgoticas.salle.cinetrack.ui.screens.home.DiscoverScreen
+import nalgoticas.salle.cinetrack.ui.screens.home.HomeScreen
+import nalgoticas.salle.cinetrack.ui.screens.home.MovieDetailScreen
+import nalgoticas.salle.cinetrack.ui.screens.home.ProfileScreen
+import nalgoticas.salle.cinetrack.ui.screens.home.diaryScreen.DiaryScreen
+import nalgoticas.salle.cinetrack.ui.theme.background
 
 @Composable
 fun CineTrackApp() {
     val navController = rememberNavController()
-    val bg = Color(0xFF050510)
+    val bg = background
 
     Scaffold(
         containerColor = bg,

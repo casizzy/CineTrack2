@@ -1,5 +1,6 @@
-package nalgoticas.salle.cinetrack.ui.home
+package nalgoticas.salle.cinetrack.ui.screens.home
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,15 +14,12 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,22 +30,93 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import nalgoticas.salle.cinetrack.data.MovieCollections
-import nalgoticas.salle.cinetrack.data.MovieData
+import nalgoticas.salle.cinetrack.models.Pelicula
+import nalgoticas.salle.cinetrack.services.MovieService
+import nalgoticas.salle.cinetrack.ui.theme.background
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
 
 @Composable
 fun MovieDetailScreen(
     movieId: Int,
     onBack: () -> Unit
 ) {
-    val movie = MovieData.getMovie(movieId) ?: return
+    var movieDetail by remember { mutableStateOf<Pelicula?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+    var error by remember { mutableStateOf<String?>(null) }
 
-    val bg = Color(0xFF050510)
+    LaunchedEffect(movieId) {
+        isLoading = true
+        error = null
+        try {
+            val retrofit = Retrofit.Builder()
+                .baseUrl("https://api-app-peliculas.onrender.com/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+
+            val service = retrofit.create(MovieService::class.java)
+
+            val result = withContext(Dispatchers.IO) {
+                service.getMovieDetail(movieId.toString())
+            }
+
+            movieDetail = result
+        } catch (e: Exception) {
+            Log.e("MovieDetailScreen", "Error: ${e.message}", e)
+            error = "Error cargando película"
+        } finally {
+            isLoading = false
+        }
+    }
+
+    when {
+        isLoading -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(background),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(color = Color(0xFFFF4F6A))
+            }
+        }
+
+        error != null -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(background),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = error ?: "Error", color = Color.Red)
+            }
+        }
+
+        movieDetail != null -> {
+            MovieDetailContent(
+                movieId = movieId,
+                movie = movieDetail!!,
+                onBack = onBack
+            )
+        }
+    }
+}
+
+@Composable
+private fun MovieDetailContent(
+    movieId: Int,
+    movie: Pelicula,
+    onBack: () -> Unit
+) {
+    val bg = background
     var yourRating by remember { mutableStateOf(movie.rating.toInt()) }
     var review by remember { mutableStateOf("") }
 
-    var isWatched = MovieCollections.isWatched(movieId)
-    val isFavorite = MovieCollections.isFavorite(movieId)
+    val isWatched = MovieCollections.isWatched(movie.id)
+    val isFavorite = MovieCollections.isFavorite(movie.id)
 
     Box(
         modifier = Modifier
@@ -66,7 +135,7 @@ fun MovieDetailScreen(
                     .height(260.dp)
             ) {
                 AsyncImage(
-                    model = movie.imageUrl,
+                    model = movie.image_url,
                     contentDescription = movie.title,
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
@@ -119,7 +188,7 @@ fun MovieDetailScreen(
                 Spacer(Modifier.height(4.dp))
 
                 Text(
-                    text = "${movie.year}  •  ${movie.durationMinutes} min",
+                    text = "${movie.year}  •  ${movie.duration_minutes} min",
                     fontSize = 13.sp,
                     color = Color(0xFFB0B0C0)
                 )
@@ -165,6 +234,7 @@ fun MovieDetailScreen(
 
                     Spacer(Modifier.width(8.dp))
 
+                    // watched
                     Box(
                         modifier = Modifier
                             .weight(1f)
@@ -174,12 +244,9 @@ fun MovieDetailScreen(
                                 color = if (isWatched) Color(0xFF1AC98A) else Color(0xFF0D0D16),
                                 shape = RoundedCornerShape(18.dp)
                             )
-                            .clickable {
-                                MovieCollections.toggleWatched(movieId)
-                                isWatched = !isWatched
-                            },
+                            .clickable { MovieCollections.toggleWatched(movie.id) },  // 👈 Int
                         contentAlignment = Alignment.Center
-                    ) {
+                    )  {
                         Row(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
@@ -201,6 +268,7 @@ fun MovieDetailScreen(
 
                     Spacer(Modifier.width(8.dp))
 
+                    // favorite
                     Box(
                         modifier = Modifier
                             .size(48.dp)
@@ -209,7 +277,7 @@ fun MovieDetailScreen(
                                 color = if (isFavorite) Color(0xFFFF4F6A) else Color(0xFF0D0D16),
                                 shape = RoundedCornerShape(18.dp)
                             )
-                            .clickable { MovieCollections.toggleFavorite(movieId) },
+                            .clickable { MovieCollections.toggleFavorite(movie.id) },
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
@@ -258,12 +326,15 @@ fun MovieDetailScreen(
                 Spacer(Modifier.height(18.dp))
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    movie.genres.forEachIndexed { index, genre ->
-                        GenreChip(
-                            text = genre,
-                            isPrimary = index == 0
-                        )
-                    }
+                    movie.genre
+                        .split(",")
+                        .map { it.trim() }
+                        .forEachIndexed { index, g ->
+                            GenreChip(
+                                text = g,
+                                isPrimary = index == 0
+                            )
+                        }
                 }
 
                 Spacer(Modifier.height(24.dp))
@@ -284,6 +355,8 @@ fun MovieDetailScreen(
                 Spacer(Modifier.height(22.dp))
                 SectionTitle("Your Review")
                 Spacer(Modifier.height(10.dp))
+
+                var review by remember { mutableStateOf("") }
 
                 TextField(
                     value = review,
@@ -338,6 +411,7 @@ fun MovieDetailScreen(
         }
     }
 }
+
 @Composable
 private fun GenreChip(text: String, isPrimary: Boolean) {
     Box(
