@@ -1,4 +1,4 @@
-package nalgoticas.salle.cinetrack.ui.home
+package nalgoticas.salle.cinetrack.ui.screens.home.diaryScreen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -22,6 +22,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -31,6 +32,7 @@ import coil.compose.AsyncImage
 import nalgoticas.salle.cinetrack.data.Movie
 import nalgoticas.salle.cinetrack.data.MovieCollections
 import nalgoticas.salle.cinetrack.data.MovieData
+import nalgoticas.salle.cinetrack.ui.screens.home.diaryScreen.components.MovieDiaryCard
 
 private val allMovies = MovieData.movies
 
@@ -192,184 +194,5 @@ private fun MovieDiaryGrid(
                 onToggleFavorite = { onToggleFavorite(movie) }
             )
         }
-    }
-}
-
-@Composable
-private fun MovieDiaryCard(
-    movie: Movie,
-    watched: Boolean,
-    favorite: Boolean,
-    onToggleWatched: () -> Unit,
-    onToggleFavorite: () -> Unit
-) {
-    var showActions by remember { mutableStateOf(false) }
-
-    Column(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(2f / 3f)
-                .clip(RoundedCornerShape(24.dp))
-                .background(Color(0xFF262636))
-                .clickable { showActions = !showActions }
-        ) {
-            AsyncImage(
-                model = movie.imageUrl,
-                contentDescription = movie.title,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-
-            Box(
-                modifier = Modifier
-                    .matchParentSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Transparent,
-                                Color(0xCC000000)
-                            )
-                        )
-                    )
-            )
-
-            Box(
-                modifier = Modifier
-                    .padding(8.dp)
-                    .align(Alignment.TopStart)
-                    .clip(RoundedCornerShape(50))
-                    .background(
-                        if (watched) Color(0xFF1AC98A)
-                        else Color(0x661AC98A)
-                    )
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Visibility,
-                    contentDescription = "Watched",
-                    tint = Color.White,
-                    modifier = Modifier
-                        .padding(6.dp)
-                        .size(16.dp)
-                )
-            }
-
-            Box(
-                modifier = Modifier
-                    .padding(8.dp)
-                    .align(Alignment.TopEnd)
-                    .clip(RoundedCornerShape(50))
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(
-                                Color(0xFFFFC045),
-                                Color(0xFFFF8A3C)
-                            )
-                        )
-                    )
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Star,
-                        contentDescription = "Rating",
-                        tint = Color.White,
-                        modifier = Modifier
-                            .size(14.dp)
-                            .padding(end = 2.dp)
-                    )
-                    Text(
-                        text = movie.rating.toString(),
-                        color = Color.White,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-            }
-
-            if (showActions) {
-                Row(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(horizontal = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    CircleActionButton(
-                        icon = Icons.Filled.Visibility,
-                        bg = Color(0xFF1AC98A),
-                        active = watched,
-                        onClick = onToggleWatched
-                    )
-                    CircleActionButton(
-                        icon = Icons.Filled.Favorite,
-                        bg = Color(0xFFFF4F6A),
-                        active = favorite,
-                        onClick = onToggleFavorite
-                    )
-                }
-            }
-        }
-
-        Spacer(Modifier.height(8.dp))
-
-        Text(
-            text = movie.title,
-            color = Color.White,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-
-        Spacer(Modifier.height(2.dp))
-
-        Text(
-            text = "${movie.year}",
-            color = Color(0xFF8A8A99),
-            fontSize = 12.sp
-        )
-
-        Spacer(Modifier.height(4.dp))
-
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            repeat(5) { index ->
-                val filled = index < movie.rating.toInt()
-                Icon(
-                    imageVector = Icons.Filled.Star,
-                    contentDescription = null,
-                    tint = if (filled) Color(0xFFFFC045) else Color(0xFF3A3A4A),
-                    modifier = Modifier.size(14.dp)
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun CircleActionButton(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    bg: Color,
-    active: Boolean,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .size(42.dp)
-            .clip(CircleShape)
-            .background(if (active) bg else bg.copy(alpha = 0.45f))
-            .clickable { onClick() },
-        contentAlignment = Alignment.Center
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = Color.White,
-            modifier = Modifier.size(22.dp)
-        )
     }
 }
